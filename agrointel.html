@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroIntel AI — Inteligência do Agronegócio</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --green-50: #EAF3DE; --green-100: #C0DD97; --green-400: #639922;
+    --green-600: #3B6D11; --green-800: #27500A; --green-900: #173404;
+    --blue-50: #E6F1FB; --blue-600: #185FA5; --blue-800: #0C447C;
+    --amber-50: #FAEEDA; --amber-600: #854F0B; --amber-800: #633806;
+    --red-50: #FCEBEB; --red-400: #E24B4A; --red-600: #A32D2D; --red-800: #791F1F;
+    --purple-50: #EEEDFE; --purple-600: #534AB7; --purple-800: #3C3489;
+    --gray-50: #F5F5F5; --gray-100: #EEEEEE; --gray-200: #E0E0E0;
+    --gray-500: #9E9E9E; --gray-700: #616161; --gray-900: #212121;
+    --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F7F8FA; color: var(--gray-900); min-height: 100vh; }
+
+  /* SIDEBAR */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 240px; background: #fff; border-right: 1px solid var(--gray-200);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+  }
+  .sidebar-brand {
+    padding: 20px 18px 16px; border-bottom: 1px solid var(--gray-100);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .brand-icon {
+    width: 34px; height: 34px; background: var(--green-50);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+  }
+  .brand-name { font-size: 16px; font-weight: 600; color: var(--gray-900); letter-spacing: -.3px; }
+  .brand-name span { color: var(--green-600); }
+  .brand-tag { font-size: 10px; color: var(--gray-500); margin-top: 1px; }
+
+  .sidebar-nav { padding: 12px 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .8px; padding: 8px 8px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-md);
+    font-size: 14px; color: var(--gray-700); cursor: pointer;
+    transition: all .15s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--gray-50); color: var(--gray-900); }
+  .nav-item.active { background: var(--green-50); color: var(--green-600); font-weight: 500; }
+  .nav-item i { font-size: 18px; }
+  .nav-chip {
+    margin-left: auto; font-size: 10px; font-weight: 600;
+    background: var(--green-400); color: #fff;
+    padding: 2px 7px; border-radius: 20px;
+  }
+
+  .sidebar-footer { padding: 12px 14px; border-top: 1px solid var(--gray-100); }
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--green-50); border-radius: var(--radius-md);
+    padding: 8px 11px; font-size: 12px; color: var(--green-800); font-weight: 500;
+  }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-400); animation: blink 1.6s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:.25} }
+
+  /* MAIN */
+  .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--gray-200);
+    padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-size: 16px; font-weight: 600; color: var(--gray-900); }
+  .topbar-sub { font-size: 12px; color: var(--gray-500); margin-top: 1px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .badge { font-size: 11px; font-weight: 500; padding: 4px 11px; border-radius: 20px; }
+  .badge-green { background: var(--green-50); color: var(--green-800); }
+  .badge-blue { background: var(--blue-50); color: var(--blue-800); }
+  .badge-amber { background: var(--amber-50); color: var(--amber-800); }
+  .badge-red { background: var(--red-50); color: var(--red-800); }
+
+  .content { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* PANELS */
+  .panel { display: none; flex-direction: column; gap: 20px; }
+  .panel.active { display: flex; }
+
+  /* SEARCH BLOCK */
+  .search-block {
+    background: #fff; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+    box-shadow: var(--shadow);
+  }
+  .search-row { display: flex; gap: 10px; align-items: center; }
+  .search-input-wrap {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md); padding: 10px 14px;
+    transition: border .15s;
+  }
+  .search-input-wrap:focus-within { border-color: var(--green-400); background: #fff; }
+  .search-input-wrap i { color: var(--gray-500); font-size: 18px; }
+  .search-input-wrap input {
+    flex: 1; font-size: 14px; background: none; border: none; outline: none;
+    color: var(--gray-900);
+  }
+  .search-input-wrap input::placeholder { color: var(--gray-500); }
+  .btn-primary {
+    font-size: 13px; font-weight: 600; background: var(--green-600); color: #fff;
+    border: none; border-radius: var(--radius-md); padding: 10px 20px; cursor: pointer;
+    display: flex; align-items: center; gap: 7px; white-space: nowrap; transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--green-800); }
+  .btn-primary:disabled { background: var(--gray-200); color: var(--gray-500); cursor: not-allowed; }
+
+  .chips-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+  .chips-label { font-size: 12px; color: var(--gray-500); }
+  .chip {
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--gray-200); background: #fff; cursor: pointer;
+    color: var(--gray-700); transition: all .12s;
+  }
+  .chip:hover { border-color: var(--green-400); color: var(--green-600); background: var(--green-50); }
+
+  .sources-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+  .src {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500; padding: 4px 11px; border-radius: 20px;
+    cursor: pointer; border: 1px solid var(--gray-200); color: var(--gray-500);
+    transition: all .12s; background: #fff; user-select: none;
+  }
+  .src.on { background: var(--green-50); color: var(--green-600); border-color: var(--green-100); }
+  .src-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* STAT GRID */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat-card {
+    background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 11px; color: var(--gray-500); font-weight: 500; }
+  .stat-value { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+  .stat-delta { font-size: 12px; }
+  .delta-up { color: var(--green-600); }
+  .delta-dn { color: var(--red-600); }
+
+  /* NEWS CARDS */
+  .section-header { display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+  .section-meta { font-size: 12px; color: var(--gray-500); }
+
+  .news-list { display: flex; flex-direction: column; gap: 12px; }
+  .news-card {
+    background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+    box-shadow: var(--shadow); transition: box-shadow .15s;
+  }
+  .news-card:hover { box-shadow: var(--shadow-md); }
+  .news-card.alert { border-left: 3px solid var(--red-400); }
+  .news-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .news-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .news-date { font-size: 11px; color: var(--gray-500); white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+  .news-title { font-size: 15px; font-weight: 600; color: var(--gray-900); line-height: 1.4; }
+  .news-title a { color: inherit; text-decoration: none; }
+  .news-title a:hover { color: var(--green-600); }
+  .news-body { font-size: 13px; color: var(--gray-700); line-height: 1.65; }
+  .news-insight {
+    background: var(--green-50); border-radius: var(--radius-md);
+    padding: 10px 13px; font-size: 13px; color: var(--green-900); line-height: 1.55;
+  }
+  .news-card.alert .news-insight { background: var(--red-50); color: var(--red-800); }
+  .news-insight b { font-weight: 600; }
+  .news-footer { display: flex; align-items: center; justify-content: space-between; }
+  .src-link {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--gray-500); text-decoration: none; transition: color .12s;
+  }
+  .src-link:hover { color: var(--green-600); }
+  .btn-sm {
+    font-size: 12px; padding: 6px 13px; border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200); background: #fff; cursor: pointer;
+    color: var(--gray-700); display: flex; align-items: center; gap: 5px;
+    transition: all .12s;
+  }
+  .btn-sm:hover { border-color: var(--green-400); color: var(--green-600); background: var(--green-50); }
+
+  /* ESTRATÉGIAS */
+  .strat-list { display: flex; flex-direction: column; gap: 12px; }
+  .strat-card {
+    background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+    box-shadow: var(--shadow);
+  }
+  .strat-header { display: flex; align-items: center; gap: 12px; }
+  .strat-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .strat-name { font-size: 15px; font-weight: 600; color: var(--gray-900); }
+  .strat-sub { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  .strat-body { font-size: 13px; color: var(--gray-700); line-height: 1.65; }
+  .action-list { display: flex; flex-wrap: wrap; gap: 7px; }
+  .action-chip {
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--gray-200); background: var(--gray-50);
+    color: var(--gray-700); cursor: default;
+  }
+
+  /* ANÁLISE EMPRESA */
+  .company-profile {
+    background: var(--green-50); border-radius: var(--radius-lg);
+    padding: 20px 22px; display: flex; align-items: center; gap: 16px;
+  }
+  .company-avatar {
+    width: 56px; height: 56px; border-radius: var(--radius-lg);
+    background: var(--green-600); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; flex-shrink: 0;
+  }
+  .company-name { font-size: 20px; font-weight: 700; color: var(--green-900); }
+  .company-sector { font-size: 13px; color: var(--green-600); margin-top: 3px; }
+  .company-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .ctag { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; background: var(--green-100); color: var(--green-900); }
+
+  .pessoas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .pessoa-card {
+    background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    padding: 14px 15px; display: flex; flex-direction: column; gap: 8px;
+    box-shadow: var(--shadow);
+  }
+  .pessoa-top { display: flex; align-items: center; gap: 10px; }
+  .pessoa-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--green-50); color: var(--green-600);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .pessoa-nome { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .pessoa-cargo { font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+  .pessoa-foco { font-size: 12px; color: var(--gray-700); line-height: 1.55; padding-top: 8px; border-top: 1px solid var(--gray-100); }
+  .pessoa-btn {
+    font-size: 11px; font-weight: 500; color: var(--green-600);
+    background: var(--green-50); border: none; border-radius: var(--radius-sm);
+    padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    align-self: flex-start; transition: background .12s;
+  }
+  .pessoa-btn:hover { background: var(--green-100); }
+
+  .moves-list { display: flex; flex-direction: column; gap: 12px; }
+  .move { display: flex; gap: 12px; }
+  .move-line { display: flex; flex-direction: column; align-items: center; gap: 0; flex-shrink: 0; }
+  .move-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green-400); flex-shrink: 0; margin-top: 4px; }
+  .move-line-bar { width: 2px; flex: 1; background: var(--gray-100); margin: 4px 0 0; }
+  .move-body { display: flex; flex-direction: column; gap: 3px; padding-bottom: 12px; }
+  .move-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .move-desc { font-size: 13px; color: var(--gray-700); line-height: 1.55; }
+  .move-date { font-size: 11px; color: var(--gray-500); }
+
+  .dores-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .dor-card {
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); padding: 14px 15px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .dor-title { font-size: 13px; font-weight: 600; color: var(--gray-900); display: flex; align-items: center; gap: 7px; }
+  .dor-desc { font-size: 12px; color: var(--gray-700); line-height: 1.55; }
+
+  .radar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .radar-item { background: var(--gray-50); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .radar-label { font-size: 11px; color: var(--gray-500); font-weight: 500; }
+  .radar-value { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+  .radar-bar { height: 4px; background: var(--gray-200); border-radius: 2px; overflow: hidden; }
+  .radar-fill { height: 100%; border-radius: 2px; }
+  .fill-green { background: var(--green-400); }
+  .fill-blue { background: #378ADD; }
+  .fill-amber { background: #BA7517; }
+
+  .opp-list { display: flex; flex-direction: column; gap: 10px; }
+  .opp-card {
+    background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    border-left: 4px solid var(--green-400); padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow);
+  }
+  .opp-card.opp-blue { border-left-color: #378ADD; }
+  .opp-card.opp-red { border-left-color: var(--red-400); }
+  .opp-card.opp-amber { border-left-color: #BA7517; }
+  .opp-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .opp-desc { font-size: 13px; color: var(--gray-700); line-height: 1.6; }
+  .opp-foot { display: flex; align-items: center; justify-content: space-between; }
+
+  .pitch-box {
+    background: linear-gradient(135deg, var(--green-50) 0%, #fff 100%);
+    border: 1px solid var(--green-100); border-radius: var(--radius-lg);
+    padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .pitch-label { font-size: 11px; font-weight: 700; color: var(--green-600); text-transform: uppercase; letter-spacing: .7px; }
+  .pitch-text {
+    font-size: 14px; color: var(--green-900); line-height: 1.7;
+    font-style: italic; border-left: 3px solid var(--green-400);
+    padding-left: 14px;
+  }
+  .pitch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-green { font-size: 13px; font-weight: 600; background: var(--green-600); color: #fff; border: none; border-radius: var(--radius-md); padding: 9px 18px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s; }
+  .btn-green:hover { background: var(--green-800); }
+  .btn-outline-green { font-size: 13px; font-weight: 500; background: #fff; color: var(--green-600); border: 1px solid var(--green-400); border-radius: var(--radius-md); padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s; }
+  .btn-outline-green:hover { background: var(--green-50); }
+
+  /* LOADING */
+  .loading-state { display: none; flex-direction: column; align-items: center; gap: 14px; padding: 3rem; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--green-400); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--gray-700); font-weight: 500; }
+  .loading-sub { font-size: 12px; color: var(--gray-500); }
+
+  /* EMPTY */
+  .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 3rem; background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); }
+  .empty-icon { font-size: 36px; color: var(--gray-200); }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--gray-900); }
+  .empty-sub { font-size: 13px; color: var(--gray-500); text-align: center; line-height: 1.6; max-width: 320px; }
+
+  /* SECTION wrapper */
+  .section-block { display: flex; flex-direction: column; gap: 12px; }
+  .section-block-title {
+    font-size: 11px; font-weight: 700; color: var(--gray-500);
+    text-transform: uppercase; letter-spacing: .7px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--gray-100);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .main { margin-left: 0; }
+    .stat-grid { grid-template-columns: repeat(2,1fr); }
+    .pessoas-grid { grid-template-columns: 1fr; }
+    .radar-grid { grid-template-columns: repeat(2,1fr); }
+    .dores-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="ti ti-leaf" style="font-size:18px;color:#3B6D11"></i></div>
+      <div>
+        <div class="brand-name">Agro<span>Intel</span> AI</div>
+        <div class="brand-tag">Inteligência do agronegócio</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Monitoramento</div>
+      <button class="nav-item active" onclick="showPanel('news',this)">
+        <i class="ti ti-news"></i> Notícias ao vivo <span class="nav-chip">5</span>
+      </button>
+      <button class="nav-item" onclick="showPanel('strat',this)">
+        <i class="ti ti-bulb"></i> Estratégias
+      </button>
+      <div class="nav-label" style="margin-top:8px">Inteligência</div>
+      <button class="nav-item" onclick="showPanel('empresa',this)">
+        <i class="ti ti-building-factory-2"></i> Análise de empresa
+      </button>
+      <button class="nav-item" onclick="showPanel('radar',this)">
+        <i class="ti ti-radar"></i> Radar do mercado
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        Agente ativo · Web search
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Notícias ao vivo</div>
+        <div class="topbar-sub" id="topbar-sub">Monitoramento em tempo real dos portais do agronegócio</div>
+      </div>
+      <div class="topbar-actions">
+        <span class="badge badge-green">Safra 2025 · Recorde histórico</span>
+        <span class="badge badge-amber">Margem pressionada</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== NOTÍCIAS ===== -->
+      <div id="panel-news" class="panel active">
+
+        <div class="search-block">
+          <div class="search-row">
+            <div class="search-input-wrap">
+              <i class="ti ti-search"></i>
+              <input id="news-q" placeholder="Buscar tema: safra, crédito rural, exportações, agritech..." onkeydown="if(event.key==='Enter')searchNews()">
+            </div>
+            <button class="btn-primary" id="news-btn" onclick="searchNews()">
+              <i class="ti ti-player-play"></i> Buscar
+            </button>
+          </div>
+          <div class="chips-row">
+            <span class="chips-label">Sugestões:</span>
+            <button class="chip" onclick="setSearch('safra soja milho 2025')">Safra soja/milho</button>
+            <button class="chip" onclick="setSearch('crédito rural financiamento 2025')">Crédito rural</button>
+            <button class="chip" onclick="setSearch('exportações commodities Brasil')">Exportações</button>
+            <button class="chip" onclick="setSearch('agritech tecnologia IA agronegócio')">Agritech & IA</button>
+            <button class="chip" onclick="setSearch('preço fertilizantes insumos 2025')">Insumos</button>
+            <button class="chip" onclick="setSearch('pecuária boi gordo cotação 2025')">Pecuária</button>
+          </div>
+          <div class="sources-row">
+            <span class="chips-label">Fontes:</span>
+            <div class="src on" data-src="Canal Rural" onclick="toggleSrc(this)"><div class="src-dot"></div>Canal Rural</div>
+            <div class="src on" data-src="CNA" onclick="toggleSrc(this)"><div class="src-dot"></div>CNA</div>
+            <div class="src on" data-src="Notícias Agrícolas" onclick="toggleSrc(this)"><div class="src-dot"></div>Notícias Agrícolas</div>
+            <div class="src on" data-src="Globo Rural" onclick="toggleSrc(this)"><div class="src-dot"></div>Globo Rural</div>
+            <div class="src on" data-src="Embrapa" onclick="toggleSrc(this)"><div class="src-dot"></div>Embrapa</div>
+            <div class="src on" data-src="Agrolink" onclick="toggleSrc(this)"><div class="src-dot"></div>Agrolink</div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Soja 2025 (recorde)</div><div class="stat-value">166,1 mi/t</div><div class="stat-delta delta-up">▲ 14,6% vs 2024</div></div>
+          <div class="stat-card"><div class="stat-label">Milho 2025/26</div><div class="stat-value">138,8 mi/t</div><div class="stat-delta delta-dn">▼ 1,6% vs anterior</div></div>
+          <div class="stat-card"><div class="stat-label">Rentab./ha Sorriso MT</div><div class="stat-value">R$ 1.946</div><div class="stat-delta delta-dn">▼ 36% vs 2024/25</div></div>
+          <div class="stat-card"><div class="stat-label">Plano Safra 2025/26</div><div class="stat-value">R$ 516 bi</div><div class="stat-delta delta-up">▲ Maior da história</div></div>
+        </div>
+
+        <div id="news-loading" class="loading-state">
+          <div class="spinner"></div>
+          <div class="loading-text" id="news-loading-text">Consultando portais especializados...</div>
+          <div class="loading-sub" id="news-loading-sub"></div>
+        </div>
+
+        <div id="news-results">
+          <div class="section-header" style="margin-bottom:12px">
+            <div class="section-title">5 notícias · Safra soja/milho 2025</div>
+            <div class="section-meta">Atualizado 24 mai 2026</div>
+          </div>
+          <div class="news-list" id="news-list">
+            <!-- cards injetados via JS ou estáticos abaixo -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ESTRATÉGIAS ===== -->
+      <div id="panel-strat" class="panel">
+        <div class="search-block">
+          <div class="search-row">
+            <div class="search-input-wrap">
+              <i class="ti ti-target"></i>
+              <input id="strat-q" placeholder="Descreva o contexto: segmento, produto, região, perfil de cliente..." onkeydown="if(event.key==='Enter')searchStrat()">
+            </div>
+            <button class="btn-primary" id="strat-btn" onclick="searchStrat()">
+              <i class="ti ti-player-play"></i> Gerar
+            </button>
+          </div>
+          <div class="chips-row">
+            <span class="chips-label">Exemplos:</span>
+            <button class="chip" onclick="setStratSearch('abordagem de cooperativas de soja e milho no Centro-Oeste com margem apertada')">Cooperativas soja/milho</button>
+            <button class="chip" onclick="setStratSearch('venda de insumos agrícolas para produtor com ROI comprovável')">Insumos com ROI</button>
+            <button class="chip" onclick="setStratSearch('posicionamento de agritech para grandes produtores do MATOPIBA')">Agritech MATOPIBA</button>
+            <button class="chip" onclick="setStratSearch('captação de clientes no agronegócio via LinkedIn e conteúdo')">Social selling agro</button>
+          </div>
+        </div>
+
+        <div id="strat-loading" class="loading-state">
+          <div class="spinner"></div>
+          <div class="loading-text">Gerando estratégias com base no cenário atual...</div>
+        </div>
+
+        <div id="strat-results">
+          <div class="empty-state">
+            <i class="ti ti-bulb empty-icon"></i>
+            <div class="empty-title">Gere estratégias personalizadas</div>
+            <div class="empty-sub">Descreva seu contexto acima ou clique em uma sugestão. O agente usa o cenário real do mercado para criar estratégias acionáveis para o seu time.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== EMPRESA ===== -->
+      <div id="panel-empresa" class="panel">
+        <div class="search-block">
+          <div class="search-row">
+            <div class="search-input-wrap">
+              <i class="ti ti-building-factory-2"></i>
+              <input id="empresa-q" placeholder="Nome da empresa, cooperativa, trading ou fabricante..." onkeydown="if(event.key==='Enter')searchEmpresa()">
+            </div>
+            <button class="btn-primary" id="empresa-btn" onclick="searchEmpresa()">
+              <i class="ti ti-search"></i> Analisar
+            </button>
+          </div>
+          <div class="chips-row">
+            <span class="chips-label">Exemplos:</span>
+            <button class="chip" onclick="setEmpresaSearch('Bunge Brasil')">Bunge Brasil</button>
+            <button class="chip" onclick="setEmpresaSearch('Cocamar Cooperativa')">Cocamar</button>
+            <button class="chip" onclick="setEmpresaSearch('John Deere Brasil')">John Deere</button>
+            <button class="chip" onclick="setEmpresaSearch('SLC Agrícola')">SLC Agrícola</button>
+            <button class="chip" onclick="setEmpresaSearch('Gerdau agronegócio')">Gerdau</button>
+            <button class="chip" onclick="setEmpresaSearch('Coamo Cooperativa')">Coamo</button>
+          </div>
+        </div>
+
+        <div id="empresa-loading" class="loading-state">
+          <div class="spinner"></div>
+          <div class="loading-text" id="empresa-loading-text">Pesquisando perfil da empresa...</div>
+        </div>
+
+        <div id="empresa-results">
+          <!-- Gerdau pré-carregada como exemplo -->
+          <div class="company-profile" style="margin-bottom:20px">
+            <div class="company-avatar">GE</div>
+            <div>
+              <div class="company-name">Gerdau S.A.</div>
+              <div class="company-sector">Siderurgia · Insumos para agronegócio · Porto Alegre, RS</div>
+              <div class="company-tags">
+                <span class="ctag">Arame & cercamento</span>
+                <span class="ctag">Aço para máquinas agrícolas</span>
+                <span class="ctag">Capital aberto · B3 GGBR4</span>
+                <span class="ctag">124 anos</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-grid" style="margin-bottom:20px">
+            <div class="stat-card"><div class="stat-label">Receita 2025</div><div class="stat-value">~R$ 68 bi</div><div class="stat-delta">EBITDA R$ 10,1 bi</div></div>
+            <div class="stat-card"><div class="stat-label">Investimento 2025</div><div class="stat-value">R$ 6,1 bi</div><div class="stat-delta delta-up">59% em expansão</div></div>
+            <div class="stat-card"><div class="stat-label">Plano 2026</div><div class="stat-value">R$ 4,7 bi</div><div class="stat-delta">Modernização industrial</div></div>
+            <div class="stat-card"><div class="stat-label">Funcionários</div><div class="stat-value">27.371</div><div class="stat-delta">4 países</div></div>
+          </div>
+
+          <div class="section-block" style="margin-bottom:20px">
+            <div class="section-block-title">Decisores-chave no agronegócio</div>
+            <div class="pessoas-grid">
+              <div class="pessoa-card">
+                <div class="pessoa-top"><div class="pessoa-avatar">MM</div><div><div class="pessoa-nome">Maurício Metz</div><div class="pessoa-cargo">VP de Aços Longos e Aços Especiais Brasil</div></div></div>
+                <div class="pessoa-foco">Responsável pela estratégia agro. Porta-voz na Agrishow 2026. Quer posicionar a Gerdau como parceira estratégica do campo, não só fornecedora de aço.</div>
+                <button class="pessoa-btn"><i class="ti ti-message" style="font-size:12px"></i> Criar pitch</button>
+              </div>
+              <div class="pessoa-card">
+                <div class="pessoa-top"><div class="pessoa-avatar">RC</div><div><div class="pessoa-nome">Roger Cruz</div><div class="pessoa-cargo">Gerente de Marketing de Trefilados</div></div></div>
+                <div class="pessoa-foco">Responsável pelo portfólio agropecuário (arames Elefante, GIR, Urso). Ponto de contato direto para marketing de produtos rurais e lançamentos.</div>
+                <button class="pessoa-btn"><i class="ti ti-message" style="font-size:12px"></i> Criar pitch</button>
+              </div>
+              <div class="pessoa-card">
+                <div class="pessoa-top"><div class="pessoa-avatar">RR</div><div><div class="pessoa-nome">Rodrigo Cesar Rose</div><div class="pessoa-cargo">Gerente Geral de Vendas (Trefilados)</div></div></div>
+                <div class="pessoa-foco">Liderança comercial para linha de trefilados. Histórico em vendas nacionais — decisor de parcerias comerciais e canais de distribuição.</div>
+                <button class="pessoa-btn"><i class="ti ti-message" style="font-size:12px"></i> Criar pitch</button>
+              </div>
+              <div class="pessoa-card">
+                <div class="pessoa-top"><div class="pessoa-avatar">GW</div><div><div class="pessoa-nome">Gustavo Werneck</div><div class="pessoa-cargo">CEO — Gerdau S.A.</div></div></div>
+                <div class="pessoa-foco">CEO com foco em adaptabilidade. Declarou: "O que me tiraria o sono seria não ter empresa preparada para mudar rápido" — abertura clara à inovação.</div>
+                <button class="pessoa-btn"><i class="ti ti-bulb" style="font-size:12px"></i> Usar visão</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block" style="margin-bottom:20px">
+            <div class="section-block-title">Radar estratégico</div>
+            <div class="radar-grid">
+              <div class="radar-item"><div class="radar-label">Abertura a parcerias</div><div class="radar-value">88%</div><div class="radar-bar"><div class="radar-fill fill-green" style="width:88%"></div></div></div>
+              <div class="radar-item"><div class="radar-label">Expansão ativa</div><div class="radar-value">90%</div><div class="radar-bar"><div class="radar-fill fill-green" style="width:90%"></div></div></div>
+              <div class="radar-item"><div class="radar-label">Pressão ESG</div><div class="radar-value">85%</div><div class="radar-bar"><div class="radar-fill fill-blue" style="width:85%"></div></div></div>
+              <div class="radar-item"><div class="radar-label">Maturidade marca agro</div><div class="radar-value">72%</div><div class="radar-bar"><div class="radar-fill fill-green" style="width:72%"></div></div></div>
+              <div class="radar-item"><div class="radar-label">Urgência de decisão</div><div class="radar-value">65%</div><div class="radar-bar"><div class="radar-fill fill-amber" style="width:65%"></div></div></div>
+              <div class="radar-item"><div class="radar-label">Sensibilidade a preço</div><div class="radar-value">45%</div><div class="radar-bar"><div class="radar-fill fill-amber" style="width:45%"></div></div></div>
+            </div>
+          </div>
+
+          <div class="section-block" style="margin-bottom:20px">
+            <div class="section-block-title">Oportunidades de abordagem</div>
+            <div class="opp-list">
+              <div class="opp-card">
+                <div class="opp-title">Inteligência de mercado para reposicionamento de marca</div>
+                <div class="opp-desc">A Gerdau quer ser "parceira estratégica" do agro. Isso cria demanda por inteligência de mercado, estudos de comportamento do produtor, monitoramento de cenário e conteúdo estratégico — exatamente o que você produz.</div>
+                <div class="opp-foot"><span class="badge badge-green">Alta prioridade</span></div>
+              </div>
+              <div class="opp-card opp-blue">
+                <div class="opp-title">Conteúdo para o novo eixo de máquinas agrícolas</div>
+                <div class="opp-desc">A Gerdau abriu um novo mercado: aço para fabricantes de máquinas. Precisam construir credibilidade e relacionamento nesse segmento — mapeamento de montadoras, conteúdo técnico e estratégia de entrada.</div>
+                <div class="opp-foot"><span class="badge badge-blue">Eixo novo</span></div>
+              </div>
+              <div class="opp-card opp-amber">
+                <div class="opp-title">Proposta ESG e rastreabilidade no campo</div>
+                <div class="opp-desc">O plano de investimentos tem pilar ambiental explícito. Propor estudos de impacto, mapeamento de práticas ESG no agro e comunicação de resultados é uma entrada com alto valor percebido.</div>
+                <div class="opp-foot"><span class="badge badge-amber">ESG</span></div>
+              </div>
+              <div class="opp-card opp-red">
+                <div class="opp-title">Entre pela porta certa: Roger Cruz, não pelo CEO</div>
+                <div class="opp-desc">Para projetos de marketing e inteligência, o decisor real é Roger Cruz (Marketing). Maurício Metz é o sponsor estratégico. A abordagem ideal começa pelos gerentes e sobe, não o contrário.</div>
+                <div class="opp-foot"><span class="badge badge-red">Tática</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-block-title">Pitch de abertura recomendado</div>
+            <div class="pitch-box">
+              <div class="pitch-label">Mensagem de abertura — Roger Cruz, Gerente de Marketing</div>
+              <div class="pitch-text">"Roger, acompanhei a presença da Gerdau na Agrishow e o movimento de reposicionamento como parceira estratégica do agro. Trabalho com inteligência de mercado e estratégia para o setor — e enxergo uma oportunidade clara de apoiar esse novo posicionamento com dados reais sobre comportamento do produtor, cenário de safra e abertura para o eixo de máquinas agrícolas. Posso compartilhar um panorama do mercado que pode ser útil para vocês agora. Faz sentido uma conversa de 20 minutos?"</div>
+              <div class="pitch-actions">
+                <button class="btn-green" onclick="copyPitch()"><i class="ti ti-copy" style="font-size:14px"></i> Copiar pitch</button>
+                <button class="btn-outline-green"><i class="ti ti-mail" style="font-size:14px"></i> Versão e-mail</button>
+                <button class="btn-outline-green"><i class="ti ti-brand-linkedin" style="font-size:14px"></i> Versão LinkedIn</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RADAR ===== -->
+      <div id="panel-radar" class="panel">
+        <div class="empty-state">
+          <i class="ti ti-radar empty-icon"></i>
+          <div class="empty-title">Radar do mercado — em breve</div>
+          <div class="empty-sub">Painel consolidado com indicadores de preços de commodities, câmbio, crédito rural e movimentos de players do setor em tempo real.</div>
+          <button class="btn-primary" style="margin-top:4px"><i class="ti ti-bell"></i> Solicitar acesso</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<script>
+const TOPBAR = {
+  news: { title: 'Notícias ao vivo', sub: 'Monitoramento em tempo real dos portais do agronegócio' },
+  strat: { title: 'Estratégias de marketing', sub: 'Geradas com base no cenário atual do mercado' },
+  empresa: { title: 'Análise de empresa', sub: 'Inteligência estratégica de decisores e movimentos do setor' },
+  radar: { title: 'Radar do mercado', sub: 'Indicadores consolidados do agronegócio brasileiro' }
+};
+
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('topbar-title').textContent = TOPBAR[id].title;
+  document.getElementById('topbar-sub').textContent = TOPBAR[id].sub;
+}
+
+const activeSrcs = new Set(['Canal Rural','CNA','Notícias Agrícolas','Globo Rural','Embrapa','Agrolink']);
+function toggleSrc(el) {
+  const s = el.dataset.src;
+  if (activeSrcs.has(s)) { activeSrcs.delete(s); el.classList.remove('on'); }
+  else { activeSrcs.add(s); el.classList.add('on'); }
+}
+
+function setSearch(v) { document.getElementById('news-q').value = v; searchNews(); }
+function setStratSearch(v) { document.getElementById('strat-q').value = v; searchStrat(); }
+function setEmpresaSearch(v) { document.getElementById('empresa-q').value = v; searchEmpresa(); }
+
+const NEWS_STATIC = [
+  { fonte:'IBGE', tag:'Safra recorde', tagClass:'badge-green', date:'Jan 2026', alert:false,
+    title:'Safra de grãos 2025 atinge recorde histórico de 346 mi de toneladas',
+    url:'https://agenciadenoticias.ibge.gov.br/agencia-noticias/2012-agencia-de-noticias/noticias/45674-safra-de-2025-e-recorde-e-previsao-para-2026-e-1-8-menor',
+    body:'A produção de soja chegou a 166,1 mi/t (+14,6%) e o milho a 141,7 mi/t, ambos quebrando recordes. A área plantada cresceu, mas a produtividade avançou muito mais rápido — resultado de anos de pesquisa da Embrapa.',
+    insight:'<b>Insight estratégico:</b> Safra recorde com produtor pressionado por custo. Momento ideal para posicionar soluções de gestão financeira e comercialização, não só insumos. O produtor está aberto à conversa estratégica.'
+  },
+  { fonte:'CNA', tag:'Alerta rentabilidade', tagClass:'badge-red', date:'Jun 2025', alert:true,
+    title:'CNA alerta: custo operacional da soja pode passar R$ 5.670/ha e margem cai até 47%',
+    url:'https://www.cnabrasil.org.br/noticias/cna-discute-projecoes-para-a-safra-2025-26-com-alerta-sobre-rentabilidade-da-soja',
+    body:'Custo Operacional Efetivo pode ultrapassar R$ 5.670/ha em Rio Verde (GO). Alta puxada por fertilizantes (+7%), agravada pela guerra comercial dos EUA. A margem bruta do produtor pode cair quase pela metade.',
+    insight:'<b>Alerta estratégico:</b> Produtor com margem pressionada é comprador mais exigente em ROI. Reformule sua proposta de valor com foco em redução de custo por saca. Quem mostrar números concretos fecha mais.'
+  },
+  { fonte:'Agrolink', tag:'Câmbio & preço', tagClass:'badge-amber', date:'Mai 2026', alert:false,
+    title:'Câmbio desfavorável pressiona soja: 45% da produção 2025/26 ainda sem comercializar',
+    url:'https://www.agrolink.com.br/noticias/cambio-pressiona-rentabilidade-da-soja_514348.html',
+    body:'Cerca de 45% da produção permanece sem venda. O câmbio mais baixo não sustenta o preço e analistas indicam tendência de menor uso de tecnologia na próxima safra.',
+    insight:'<b>Insight estratégico:</b> Com 45% da soja no silo, o produtor precisa de armazenagem, logística e estratégia de comercialização. Para insumos, a conversa da próxima safra começa agora.'
+  },
+  { fonte:'Conab / CNN Brasil', tag:'Exportações', tagClass:'badge-blue', date:'Fev 2026', alert:false,
+    title:'Conab: soja 2025/26 em 177,9 mi/t e exportações podem bater recorde de 112 mi/t',
+    url:'https://www.cnnbrasil.com.br/agro/conab-eleva-estimativa-de-producao-de-soja-e-milho-para-safra-2025-26/',
+    body:'Novo recorde de produção projetado, com exportações podendo crescer 5,11%. Beneficiadas pela maior demanda global e eventual redução das exportações americanas.',
+    insight:'<b>Insight estratégico:</b> Exportações recordes aquecem tradings e logística portuária. Pautar sustentabilidade e rastreabilidade abre portas com compradores europeus e asiáticos que exigem ESG.'
+  },
+  { fonte:'Orígeo', tag:'Geopolítica', tagClass:'badge-amber', date:'Mai 2026', alert:false,
+    title:'Trégua tarifária EUA–China derruba preço da soja brasileira mesmo com safra menor nos EUA',
+    url:'https://origeo.com/mercado-soja-2025/',
+    body:'A trégua tarifária EUA–China derrubou o preço da soja imediatamente. O cenário reforça a necessidade de estratégias de produtividade e controle de custo para manter rentabilidade.',
+    insight:'<b>Insight estratégico:</b> Volatilidade geopolítica virou pauta constante do produtor. Empresas que oferecem hedge ou barter ganham relevância. Produza conteúdo educativo e posicione sua marca como parceira.'
+  }
+];
+
+function renderNews(list) {
+  const colors = { 'badge-green':'background:#EAF3DE;color:#27500A', 'badge-red':'background:#FCEBEB;color:#791F1F', 'badge-amber':'background:#FAEEDA;color:#633806', 'badge-blue':'background:#E6F1FB;color:#0C447C' };
+  return list.map(n => `
+    <div class="news-card ${n.alert?'alert':''}">
+      <div class="news-top">
+        <div class="news-tags">
+          <span class="badge" style="${colors[n.tagClass]||''}">${n.fonte}</span>
+          <span class="badge" style="${colors[n.tagClass]||''}">${n.tag}</span>
+        </div>
+        <span class="news-date">${n.date}</span>
+      </div>
+      <div class="news-title"><a href="${n.url}" target="_blank">${n.title}</a></div>
+      <div class="news-body">${n.body}</div>
+      <div class="news-insight">${n.insight}</div>
+      <div class="news-footer">
+        <a class="src-link" href="${n.url}" target="_blank"><i class="ti ti-external-link" style="font-size:13px"></i>${n.fonte}</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('news-list').innerHTML = renderNews(NEWS_STATIC);
+
+function searchNews() {
+  const q = document.getElementById('news-q').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('news-btn');
+  btn.disabled = true;
+  document.getElementById('news-loading').style.display = 'flex';
+  document.getElementById('news-results').style.display = 'none';
+  const steps = ['Consultando Canal Rural e CNA...','Verificando Notícias Agrícolas e Agrolink...','Analisando com IA...','Gerando insights estratégicos...'];
+  let si = 0;
+  const t = setInterval(() => { document.getElementById('news-loading-text').textContent = steps[++si % steps.length]; }, 1800);
+  document.getElementById('news-loading-sub').textContent = 'Fontes: ' + [...activeSrcs].join(', ');
+  setTimeout(() => {
+    clearInterval(t);
+    document.getElementById('news-loading').style.display = 'none';
+    document.getElementById('news-results').style.display = 'block';
+    document.getElementById('news-list').innerHTML = renderNews(NEWS_STATIC);
+    btn.disabled = false;
+  }, 3500);
+}
+
+function searchStrat() {
+  const q = document.getElementById('strat-q').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('strat-btn');
+  btn.disabled = true;
+  document.getElementById('strat-loading').style.display = 'flex';
+  document.getElementById('strat-results').innerHTML = '';
+  const strats = [
+    { icon:'🎯', bg:'#EAF3DE', title:'Proposta baseada em ROI comprovável', sub:'Para mercado com margem apertada', body:'Com o produtor pressionado e a Selic em 15%, qualquer investimento precisa mostrar retorno claro. Estruture sua oferta com métricas antes/depois, cases regionais e calculadora de economia. Elimine a percepção de custo — posicione como redução de risco.', acoes:['Criar calculadora de ROI por produto','Mapear 3 cases de referência regionais','Apresentar proposta com payback em sacas'] },
+    { icon:'📊', bg:'#E6F1FB', title:'Conteúdo de inteligência como porta de entrada', sub:'Educação antes de venda', body:'Distribua gratuitamente análises de mercado, boletins de safra e alertas de câmbio para os decisores do setor. Quem educa vira referência — e referência vira fornecedor preferencial quando o momento de compra chegar.', acoes:['Newsletter semanal para decisores','Webinar mensal de cenário do agro','Relatório exclusivo por segmento'] },
+    { icon:'🤝', bg:'#FAEEDA', title:'Parceria com cooperativas como canal de entrada', sub:'Credibilidade via intermediário', body:'Cooperativas têm acesso e confiança com o produtor que você não consegue comprar. Estruture acordos de co-marketing, treinamentos conjuntos e materiais cobranded. A cooperativa vira seu vendedor sem ser seu vendedor.', acoes:['Mapear 10 cooperativas-alvo na região','Proposta de co-marketing estruturada','Kit de capacitação para técnicos da coop'] }
+  ];
+  setTimeout(() => {
+    document.getElementById('strat-loading').style.display = 'none';
+    document.getElementById('strat-results').innerHTML = `
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="section-title">3 estratégias para: "${q}"</div>
+      </div>
+      <div class="strat-list">${strats.map(s => `
+        <div class="strat-card">
+          <div class="strat-header">
+            <div class="strat-icon" style="background:${s.bg}">${s.icon}</div>
+            <div><div class="strat-name">${s.title}</div><div class="strat-sub">${s.sub}</div></div>
+          </div>
+          <div class="strat-body">${s.body}</div>
+          <div class="action-list">${s.acoes.map(a => `<span class="action-chip">→ ${a}</span>`).join('')}</div>
+        </div>
+      `).join('')}</div>`;
+    btn.disabled = false;
+  }, 2800);
+}
+
+function searchEmpresa() {
+  const q = document.getElementById('empresa-q').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('empresa-btn');
+  btn.disabled = true;
+  document.getElementById('empresa-loading').style.display = 'flex';
+  const steps = ['Pesquisando perfil da empresa...','Mapeando decisores...','Analisando movimentos estratégicos...','Gerando oportunidades de abordagem...'];
+  let si = 0;
+  const t = setInterval(() => { document.getElementById('empresa-loading-text').textContent = steps[++si%steps.length]; }, 1500);
+  setTimeout(() => {
+    clearInterval(t);
+    document.getElementById('empresa-loading').style.display = 'none';
+    btn.disabled = false;
+  }, 3000);
+}
+
+function copyPitch() {
+  const txt = document.querySelector('.pitch-text').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="ti ti-check" style="font-size:14px"></i> Copiado!';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy" style="font-size:14px"></i> Copiar pitch'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
